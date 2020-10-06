@@ -1,0 +1,50 @@
+1. Laucnh UWP first time .
+	Check Device info -> Store in UWP local Storage.
+	If UWP localstaorage have device info already then do call device info code.
+
+	Check local Storgae UWP Registartion Object -> false
+	Launch PWA
+	PWA call Backend Api to check subs object -> false
+	Then Opne Subs Page
+	On subs Page on toogle yes, submit -> Pass event to UWP by script notify 
+	UWP get event & Regist -> Pass event to PWA by script notify& Store Registration 
+	object to UWP Local Storage.	 
+	PWA got event for UWP -> Call backend Api to store Registration by script notify.
+	if (window.Windows) {
+      	  window.external.notify("subscribed");
+    	}
+	PWA Home
+2. unsub
+	Call API
+3. Launch UWP 
+	Check Device info -> Store in UWP local Storage.
+	If UWP localstaorage have device info already then do call device info code.
+	Check registraion object in UWP (if user is already sub , i get subs object in UWP 
+	by local storage)
+	Lauch PWA
+4. Launch UWP 
+	Check Device info -> Store in UWP local Storage.
+	If UWP localstaorage have device info already then do call device info code.
+	Check registraion object in UWP (If invalid )
+	Then uwp will auto matic re-regist.
+	After Store in UWP Storage update object.
+	Lauch PWA web View.
+
+5. When UWP is closed for 1 week , Sub token is invliad
+	then background task need to re-reg auto 
+	Send token to backend DB, update 
+
+
+Launch UWP
+
+1. Device info
+2. Registration
+3. User Info
+4. Registration Valid or Not
+
+Store on Local Storage So PWA can able to acces it.
+
+Re-Lauch UWP
+
+Pass PWA , PWA get update Value from DB can pass to UWP.
+Deskhelp_UWP
