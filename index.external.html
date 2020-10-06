@@ -1,0 +1,16 @@
+<html>
+<head>
+    <title>This is a title that no one will notice</title>
+    <script>
+        function Test(message) {//The function that will be called from C#
+            if (message) {
+                window.external.notify(message + " " + new Date())
+            }
+        }
+    </script>
+</head>
+<body>
+<h1>Hello from html</h1>
+<input type="button" value="Send message to C#" onclick="Test('Hey')"/>
+</body>
+</html>
