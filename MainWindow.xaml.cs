@@ -348,7 +348,7 @@ namespace ClientWindowsIntegration2
                     {
                         // Try again with a bigger buffer.
                         Marshal.FreeHGlobal(infoPtr);
-                        continue;
+                        continue; 
                     }
                 }
 
@@ -402,6 +402,13 @@ namespace ClientWindowsIntegration2
                     DynamicSystemData.HostAddress = connectedHost.CanonicalName;
                     DynamicSystemData.AddressType = connectedHost.Type.ToString();
                 }
+                StringBuilder sb = new StringBuilder();
+                foreach(var hn in hostNames)
+                {
+                    sb.Append(hn.DisplayName + ",");
+                }
+
+                DynamicSystemData.HostNames = sb.ToString();
             }
             catch (Exception ex)
             {
