@@ -1,1 +1,5 @@
 https://github.com/Microsoft/AppModelSamples/tree/master/Samples/UWPTaskMonitor
+
+uwp window szie change event
+https://social.msdn.microsoft.com/Forums/windowsapps/en-US/bb1908c0-351a-4aff-8b98-3e041c009ec9/uwphandler-event-change-screen-size-app-windows-10?forum=wpdevelop
+
