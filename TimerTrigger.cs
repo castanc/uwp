@@ -13,6 +13,7 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
 using Windows.Foundation;
 using Windows.Data.Json;
+using Microsoft.QueryStringDotNET;
 
 namespace Deskhelp_UWP
 {
@@ -22,9 +23,12 @@ namespace Deskhelp_UWP
     sealed partial class App : Application
     {
         public static WebView WebView;
-        public static Boolean Appload;
+        public static Boolean Appload= false;
+        public static Boolean Redirect= false;
         public BackgroundTaskRegistration timerTask;
         public DateTime ExpirationDate;
+        public DateTime LastExpirationDateVerification = new DateTime(1, 1, 1);
+
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -35,6 +39,7 @@ namespace Deskhelp_UWP
             this.Suspending += OnSuspending;
 
             RegisterPushBackgroundTask();
+            validateExpirationDate();
         }
 
         private void RegisterPushBackgroundTask()
@@ -70,39 +75,94 @@ namespace Deskhelp_UWP
         }
 
 
-        protected override async void OnBackgroundActivated(BackgroundActivatedEventArgs args)
+        #region ExpirationDate
+        private DateTime getExpirationDateFromRegistration()
         {
-            var deferral = args.TaskInstance.GetDeferral();
-
+            DateTime dt = new DateTime(1, 1, 1);
             try
             {
-                if ( timerTask != null )
+                var applicationData = Windows.Storage.ApplicationData.Current;
+                var localSettings = applicationData.LocalSettings;
+
+                //Get expiration date from registrationid in localstorage
+                var registrationId = localSettings.Values["WNSChannelRegistrationId"];
+
+                if (!(registrationId == null || registrationId == ""))
+                {
+                    var regJson = registrationId.ToString();
+                    var regObject = JsonObject.Parse(regJson);
+                    string dateReg = regObject["expirationTime"].ToString().Replace("{", "").Replace("}", "").Replace("\"", "");
+                    dt = Convert.ToDateTime(dateReg);
+                }
+            }
+            catch(Exception ex)
+            {
+
+            }
+
+            return dt;
+
+        }
+
+        private DateTime GetExpirationdate(DateTime dt)
+        {
+            try
+            {
+                var applicationData = Windows.Storage.ApplicationData.Current;
+                var localSettings = applicationData.LocalSettings;
+
+                if (dt == null || dt == new DateTime(1,1,1) )
+                {
+                    //getcurrent expirationd ate from local storage
+                    var expDate = localSettings.Values["ExpirationTime"];
+                    if (expDate != null)
+                        dt = buildExpirationDate(expDate.ToString());
+                    else
+                    {
+                        dt = getExpirationDateFromRegistration();
+                        string stringDate = $"{dt.Year},{dt.Month},{dt.Day},{dt.Hour},{dt.Minute},{dt.Second}";
+                        localSettings.Values["ExpirationTime"] = stringDate;
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                dt = new DateTime(1, 1, 1);
+            }
+            return dt;
+        }
+
+        private DateTime buildExpirationDate(string sdt)
+        {
+            DateTime dt = new DateTime(1, 1, 1);
+            try
+            {
+                var p = sdt.Split(',');
+                dt = new DateTime(Convert.ToInt32(p[0]),
+                    Convert.ToInt32(p[1]),
+                    Convert.ToInt32(p[2]),
+                    Convert.ToInt32(p[3]),
+                    Convert.ToInt32(p[4]),
+                    Convert.ToInt32(p[5]));
+            }
+            catch(Exception ex )
+            {
+
+            }
+            return dt;
+        }
+
+        private async void validateExpirationDate()
+        {
+            try
+            {
+                if (LastExpirationDateVerification < DateTime.Now.AddDays(-1))
                 {
                     var applicationData = Windows.Storage.ApplicationData.Current;
                     var localSettings = applicationData.LocalSettings;
 
-                    if (ExpirationDate == null)
-                    {
-                        //getcurrent expirationd ate from local storage
-                        var expDate = localSettings.Values["ExpirationTime"];
-                        if (expDate != null)
-                            ExpirationDate = Convert.ToDateTime(expDate);
-                        else
-                        {
-                            //Get expiration date from registrationid in localstorage
-                            var registrationId = localSettings.Values["WNSChannelRegistrationId"];
+                    ExpirationDate = GetExpirationdate(ExpirationDate);
 
-                            if (!(registrationId == null || registrationId == ""))
-                            {
-                                var regJson = registrationId.ToString();
-                                var regObject = JsonObject.Parse(regJson);
-                                string dateReg = regObject["expirationTime"].ToString().Replace("{", "").Replace("}", "").Replace("\"", "");
-                                ExpirationDate = Convert.ToDateTime(dateReg);
-                                localSettings.Values["ExpirationTime"] = ExpirationDate;
-                            }
-                            else ExpirationDate = new DateTime(1, 1, 1);
-                        }
-                    }
                     if (ExpirationDate < DateTime.Now.AddDays(-1))
                     {
                         //resubscribe
@@ -114,44 +174,116 @@ namespace Deskhelp_UWP
 
                         //Update expiration date
                         ExpirationDate = Convert.ToDateTime(dateReg);
-                        localSettings.Values["ExpirationTime"] = ExpirationDate;
+                        string stringDate = $"{ExpirationDate.Year},{ExpirationDate.Month},{ExpirationDate.Day},{ExpirationDate.Hour},{ExpirationDate.Minute},{ExpirationDate.Second}";
+                        localSettings.Values["ExpirationTime"] = stringDate;
                     }
-
+                    LastExpirationDateVerification = DateTime.Now;
                 }
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+#endregion
+
+
+
+        protected override async void OnBackgroundActivated(BackgroundActivatedEventArgs args)
+        {
+            var deferral = args.TaskInstance.GetDeferral();
+
+            try
+            {
+                validateExpirationDate();
+
                 RawNotification notification = (RawNotification)args.TaskInstance.TriggerDetails;
 
                 // Decrypt the content
                 string payload = await PushManager.GetDecryptedContentAsync(notification);
+                //var payloadJson = payload.ToString();
+                JsonObject payloadJson = JsonObject.Parse(payload);
 
-                // Show a notification
-                // You'll need Microsoft.Toolkit.Uwp.Notifications NuGet package installed for this code
-                ToastContent content = new ToastContent()
+                var applicationData2 = Windows.Storage.ApplicationData.Current;
+                var localSettings2 = applicationData2.LocalSettings;
+                var DeviceInfo = (string)localSettings2.Values["DeviceInfo"];
+
+                if (payloadJson["AssetID"].ToString().Replace("{", "").Replace("}", "").Replace("\"", "") == DeviceInfo)
                 {
-                    Visual = new ToastVisual()
+                    if (payloadJson["type"].ToString().Replace("{", "").Replace("}", "").Replace("\"", "") == "in-device")
                     {
-                        BindingGeneric = new ToastBindingGeneric()
+
+                        var title = payloadJson["title"].ToString().Replace("{", "").Replace("}", "").Replace("\"", "");
+                        var content = payloadJson["content"].ToString().Replace("{", "").Replace("}", "").Replace("\"", "");
+
+                        // Show a notification
+                        // You'll need Microsoft.Toolkit.Uwp.Notifications NuGet package installed for this code
+
+                        // Construct the actions for the toast (inputs and buttons)
+                        ToastActionsCustom actions = new ToastActionsCustom()
                         {
-                            Children =
+                            Buttons =
+                {
+                    new ToastButton("Yes", new QueryString()
+                    {
+                        { "action", "reply" },
+                        { "conversationId", "test"}
+
+                    }.ToString())
+                    {
+                        ActivationType = ToastActivationType.Background
+                    },
+
+                    new ToastButton("No", new QueryString()
+                    {
+                        { "action", "like" },
+                        { "conversationId", "test" }
+
+                    }.ToString())
+                    {
+                        ActivationType = ToastActivationType.Background
+                    }
+
+                    }
+                        };
+
+
+                        ToastContent visual = new ToastContent()
+                        {
+                            Visual = new ToastVisual()
+                            {
+                                BindingGeneric = new ToastBindingGeneric()
+                                {
+                                    Children =
                         {
                             new AdaptiveText()
                             {
-                                Text = "Push notification received"
+                                Text = title
                             },
                             new AdaptiveText()
                             {
-                                Text = payload
+                                Text = content
                             }
                         }
-                        }
+                                }
+                            },
+                            Actions = actions
+                        };
+                        ToastNotificationManager.CreateToastNotifier().Show(new ToastNotification(visual.GetXml()));
                     }
-                };
-                if (Appload == false)
-                {
-                    ToastNotificationManager.CreateToastNotifier().Show(new ToastNotification(content.GetXml()));
-                }
-                else
-                {
-                    await App.WebView.InvokeScriptAsync("pushNotifications", new string[] { "One" });
+                    else
+                    {
+                        await App.WebView.InvokeScriptAsync("pushNotifications", new string[] { "One" });
+                    }
+                    //if (Appload == false)
+                    //{
+                    //    ToastNotificationManager.CreateToastNotifier().Show(new ToastNotification(visual.GetXml()));
+                    //}
+                    //else
+                    //{
+                    //    await App.WebView.InvokeScriptAsync("pushNotifications", new string[] { "One" });
+                    //}
+
                 }
                 //ToastNotificationManager.CreateToastNotifier().Show(new ToastNotification(content.GetXml()));
             }
@@ -214,11 +346,11 @@ namespace Deskhelp_UWP
                 // Ensure the current window is active
                 //float DPI = Windows.Graphics.Display.DisplayInformation.GetForCurrentView().LogicalDpi;
 
-                Windows.UI.ViewManagement.ApplicationView.PreferredLaunchWindowingMode = Windows.UI.ViewManagement.ApplicationViewWindowingMode.PreferredLaunchViewSize;
+                //Windows.UI.ViewManagement.ApplicationView.PreferredLaunchWindowingMode = Windows.UI.ViewManagement.ApplicationViewWindowingMode.PreferredLaunchViewSize;
 
-                //var desiredSize = new Windows.Foundation.Size(((float)600 * 96.0f / DPI), ((float)800 * 96.0f / DPI));
+                ////var desiredSize = new Windows.Foundation.Size(((float)600 * 96.0f / DPI), ((float)800 * 96.0f / DPI));
 
-                Windows.UI.ViewManagement.ApplicationView.PreferredLaunchViewSize = new Size(500, 600); ;
+                //Windows.UI.ViewManagement.ApplicationView.PreferredLaunchViewSize = new Size(500, 600); ;
 
                 Window.Current.Activate();
 
@@ -250,14 +382,14 @@ namespace Deskhelp_UWP
                 }
                 else
                 {
-                    string url_new = "https://deskhelptest.azurewebsites.net/ui/";
+                    Redirect = true;// string url_new = "https://deskhelptest.azurewebsites.net/ui/subscription";
                     if (rootFrame == null)
                     {
                         rootFrame = new Frame();
                         Window.Current.Content = rootFrame;
                     }
+                    rootFrame.Navigate(typeof(MainPage));
                     Window.Current.Activate();
-                    App.WebView.Navigate(new Uri(@url_new));
                 }
                 
             }
