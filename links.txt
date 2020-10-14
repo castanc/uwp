@@ -1,3 +1,11 @@
+uwp set device expiration in azure hub
+https://stackoverflow.com/questions/21429084/refresh-device-registration-with-azure-notification-hub-device-sdk
+
+uwp device expiration time for notification hub
+https://github.com/MicrosoftDocs/azure-docs/issues/58581
+
+
+
 https://github.com/Microsoft/AppModelSamples/tree/master/Samples/UWPTaskMonitor
 
 uwp window szie change event
