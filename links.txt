@@ -1,3 +1,14 @@
+20201015 make background task run on startup
+https://social.msdn.microsoft.com/Forums/en-US/abb1dde1-afe5-4341-9210-fc78210376c4/uwphow-do-i-make-my-backgroundtask-start-on-startup?forum=wpdevelop
+
+run backgroudn task every day
+https://stackoverflow.com/questions/33835416/run-background-task-every-day-in-uwp-app
+
+debug background task
+https://blogs.windows.com/windowsdeveloper/2016/06/09/debugging-a-background-task-on-a-time-trigger/
+
+******************************************************************************************************************************
+
 uwp set device expiration in azure hub
 https://stackoverflow.com/questions/21429084/refresh-device-registration-with-azure-notification-hub-device-sdk
 
