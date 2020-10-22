@@ -1,0 +1,6 @@
+azure telemetry
+https://portal.azure.com/#@TCSHiTech15.onmicrosoft.com/resource/subscriptions/b65c35f3-1c9c-4e66-b1fe-5cd91a96f1da/resourceGroups/WorkspaceOne/providers/microsoft.insights/components/deskhelptest/logs
+
+userid:
+1672153@tcs.com
+d942!735
