@@ -4,3 +4,15 @@ https://portal.azure.com/#@TCSHiTech15.onmicrosoft.com/resource/subscriptions/b6
 userid:
 1672153@tcs.com
 d942!735
+
+private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+
+
+TelemetryConfiguration.Active.InstrumentationKey = ConfigurationManager.AppSettings["InstrumentationKey"];
+
+var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
+XmlConfigurator.ConfigureAndWatch(logRepository, new FileInfo("App.config"));
+
+TelemetryConfiguration config = TelemetryConfigu
+
+
