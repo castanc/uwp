@@ -1,6 +1,20 @@
 web push libs
 https://github.com/web-push-libs/web-push-csharp/blob/master/WebPush/Util/Encryptor.cs
 
+ECKeyHelper
+https://github.com/web-push-libs/web-push-csharp/blob/master/WebPush/Util/ECKeyHelper.cs
+
+push manager
+https://davidtavarez.github.io/2019/implementing-elliptic-curve-diffie-hellman-c-sharp/
+
+worker queue
+ https://github.com/barebonesdev/portablelibraries/blob/master/ToolsPortable/ToolsPortable/AsyncWorkerQueue.cs
+
+web encoder
+https://github.com/LogicSoftware/WebPushEncryption/blob/master/src/WebEncoder.cs
+
+
+
 azure repo
 https://dev.azure.com/TCSDeskhelp/Deskhelp/_git/UWPClient
 d942!735
