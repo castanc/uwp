@@ -1,3 +1,6 @@
-https://meet.google.com/quo-cbhv-tju
+Nov 02 2020:
+try catch every where
+show task name only in logcount how many times the task runs
+no function name in logs
 
-https://meet.google.com/gwc-izof-eno?hs=146
+custoMDimensions[""] == "taskname
