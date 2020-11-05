@@ -4,3 +4,10 @@ show task name only in logcount how many times the task runs
 no function name in logs
 
 custoMDimensions[""] == "taskname
+
+
+Vikash, the local copy in Desktop\UWPHelp are for branch Alternative
+In order to change to change branch to DeskHelpNotificationHub, these changes need to be stashed or pushed.
+Are these changes good to push to ALternative branch?
+
+
