@@ -1,0 +1,19 @@
+UWP Client:
+
+Local Path: C:\Users\1672153\Desktop\UWPClient
+DeskHelp: C:\Users\1672153\Desktop\UWPClient\DeskHelp
+AlternatePushLibrary: C:\Users\1672153\Desktop\UWPClient\AlternatePushChannel.Library
+
+Azxure repo:
+https://dev.azure.com/TCSDeskhelp/Deskhelp/_git/UWPClient
+
+There are three brnaches: master, Alternative, DeskHelpNotificationHub
+
+
+NotificationHub:
+UWP App: C:\Users\1672153\Desktop\UWPNotificationHub
+COnsole App Sender: C:\Users\1672153\Desktop\SendNotification
+
+
+Azure Portal:
+https://portal.azure.com/?allservicesweave=false&bundlingKind=DefaultPartitioner&configHash=jdzJA9d1ij2E&env=portal&l=en.en-us&pageVersion=6.672.0.5911857000.201026-0053&prefetchhome=false&prewarmie=true&weaveblade=false#@TCSHiTech15.onmicrosoft.com/resource/subscriptions/b65c35f3-1c9c-4e66-b1fe-5cd91a96f1da/resourceGroups/WorkspaceOne/providers/microsoft.insights/components/deskhelptest/logs
