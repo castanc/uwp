@@ -1,0 +1,179 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.Foundation;
+using Windows.Foundation.Collections;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Controls.Primitives;
+using Windows.UI.Xaml.Data;
+using Windows.UI.Xaml.Input;
+using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Navigation;
+
+using Windows.Networking.PushNotifications;
+using Microsoft.WindowsAzure.Messaging;
+using Microsoft.Azure.NotificationHubs;
+using Windows.UI.Popups;
+using Windows.UI.Notifications.Management;
+using Windows.UI.Notifications;
+using Windows.UI.Xaml.Media.Imaging;
+using Windows.Storage.Streams;
+
+// The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
+
+namespace UWPNotificationHub
+{
+    /// <summary>
+    /// An empty page that can be used on its own or navigated to within a Frame.
+    /// </summary>
+    public sealed partial class MainPage : Page
+    {
+
+        // Get the listener
+        public static UserNotificationListener listener = UserNotificationListener.Current;
+        public static IReadOnlyList<UserNotification> notifs;
+
+
+        //https://docs.microsoft.com/en-us/windows/uwp/design/shell/tiles-and-notifications/notification-listener
+        private async void initializeListener()
+        {
+            UserNotificationListenerAccessStatus accessStatus = await listener.RequestAccessAsync();
+
+            switch (accessStatus)
+            {
+                // This means the user has granted access.
+                case UserNotificationListenerAccessStatus.Allowed:
+
+                    // Yay! Proceed as normal
+                    // Get the toast notifications
+                    notifs = await listener.GetNotificationsAsync(NotificationKinds.Toast);
+                    break;
+
+                // This means the user has denied access.
+                // Any further calls to RequestAccessAsync will instantly
+                // return Denied. The user must go to the Windows settings
+                // and manually allow access.
+                case UserNotificationListenerAccessStatus.Denied:
+
+                    // Show UI explaining that listener features will not
+                    // work until user allows access.
+                    break;
+
+                // This means the user closed the prompt without
+                // selecting either allow or deny. Further calls to
+                // RequestAccessAsync will show the dialog again.
+                case UserNotificationListenerAccessStatus.Unspecified:
+
+                    // Show UI that allows the user to bring up the prompt again
+                    break;
+            }
+        }
+
+        public static async void readNotifications()
+        {
+            notifs = await listener.GetNotificationsAsync(NotificationKinds.Toast);
+            // Select the first notification
+            if (notifs != null && notifs.Count > 0)
+            {
+                try
+                {
+                    UserNotification notif = notifs[0];
+
+                    // Get the app's display name
+                    string appDisplayName = notif.AppInfo.DisplayInfo.DisplayName;
+
+                    // Get the app's logo
+                    BitmapImage appLogo = new BitmapImage();
+                    RandomAccessStreamReference appLogoStream = notif.AppInfo.DisplayInfo.GetLogo(new Size(16, 16));
+                    if (appLogoStream != null)
+                        await appLogo.SetSourceAsync(await appLogoStream.OpenReadAsync());
+
+                    // Get the toast binding, if present
+                    NotificationBinding toastBinding = notif.Notification.Visual.GetBinding(KnownNotificationBindings.ToastGeneric);
+
+                    if (toastBinding != null)
+                    {
+                        // And then get the text elements from the toast binding
+                        IReadOnlyList<AdaptiveNotificationText> textElements = toastBinding.GetTextElements();
+
+                        // Treat the first text element as the title text
+                        string titleText = textElements.FirstOrDefault()?.Text;
+
+                        // We'll treat all subsequent text elements as body text,
+                        // joining them together via newlines.
+                        string bodyText = string.Join("\n", textElements.Skip(1).Select(t => t.Text));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    string s = ex.Message;
+                }
+            }
+        }
+
+
+        private async void InitNotificationsAsync()
+        {
+            try
+            {
+                /*
+Endpoint=sb://deskhelpdev.servicebus.windows.net/;SharedAccessKeyName=DefaultFullSharedAccessSignature;SharedAccessKey=Le83nDUo9WP67tNsNPwo4JQpHT4ax/Sp60YfhnRF+R0=
+Endpoint=sb://deskhelpdev.servicebus.windows.net/;SharedAccessKeyName=DefaultFullSharedAccessSignature;SharedAccessKey=e1AK4FMIdnaBlvwtjqjYgvg5YaCbXvU6UrfyQL5wdbI=
+Endpoint=sb://deskhelpdev.servicebus.windows.net/;SharedAccessKeyName=DefaultListenSharedAccessSignature;SharedAccessKey=TIej1gJ3RQbP3KKKhJElI/mqXnjRw4z97XibauhEbxs=
+                  
+                 */
+                var channel = await PushNotificationChannelManager.CreatePushNotificationChannelForApplicationAsync();
+                string ConnectionString = "Endpoint=sb://deskhelpdev.servicebus.windows.net/;SharedAccessKeyName=DefaultListenSharedAccessSignature;SharedAccessKey=TIej1gJ3RQbP3KKKhJElI/mqXnjRw4z97XibauhEbxs=";
+
+                var hub = new NotificationHub("deskhelp",ConnectionString);
+                //var result = await hub.RegisterNativeAsync(channel.Uri);
+
+                var tags  = new List<string>();
+                tags.Add("@tag1");
+                var result = await hub.RegisterNativeAsync(channel.Uri,tags);
+                
+                channel.PushNotificationReceived += Channel_PushNotificationReceived;
+
+                // Displays the registration ID so you know it was successful
+                if (result.RegistrationId != null)
+                {
+                    var dialog = new MessageDialog("Registration successful: " + result.RegistrationId);
+                    dialog.Commands.Add(new UICommand("OK"));
+                    await dialog.ShowAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                string s = "";
+            }
+        }
+
+        private void Channel_PushNotificationReceived(PushNotificationChannel sender, PushNotificationReceivedEventArgs args)
+        {
+            //var dontWait = new MessageDialog("Test").ShowAsync(); 
+            if (args?.NotificationType == PushNotificationType.Toast)
+            {
+                string content = args.ToastNotification.Content.InnerText;
+                if (string.IsNullOrWhiteSpace(args.ToastNotification?.Content?.InnerText))
+                {
+                    args.Cancel = true;
+                }
+            }
+            //if (args?.NotificationType == PushNotificationType.Raw)
+            //{
+            //    string content = args.ToastNotification.Content.InnerText;
+            //}
+        }
+
+        public MainPage()
+        {
+            this.InitializeComponent();
+            InitNotificationsAsync();
+            //initializeListener();
+            //readNotifications();
+        }
+    }
+}
