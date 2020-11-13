@@ -1,0 +1,2 @@
+deskhelp url
+https://tcsdeskhelpdev.azurewebsites.net/ui
